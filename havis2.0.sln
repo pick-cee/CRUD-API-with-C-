@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31729.503
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "havis2.0", "havis2.0.csproj", "{DF592350-E1AC-4C33-93EE-3E13846BC73B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DF592350-E1AC-4C33-93EE-3E13846BC73B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DF592350-E1AC-4C33-93EE-3E13846BC73B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DF592350-E1AC-4C33-93EE-3E13846BC73B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DF592350-E1AC-4C33-93EE-3E13846BC73B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1E512D30-19FA-45A3-9269-18608EC6A926}
+	EndGlobalSection
+EndGlobal
