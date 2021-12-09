@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using havis2._0.Models;
+using havis2._0.Repository;
+using havis2._0.UnitOfWorkConfiguration;
 
 namespace havis2._0.Controllers
 {
@@ -13,38 +13,34 @@ namespace havis2._0.Controllers
     [ApiController]
     public class ClassController : Controller
     {
-        private readonly havisContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public ClassController(havisContext context)
+        public ClassController(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Class>>> getClass()
         {
-            return await _context.class1.ToListAsync();
+            return await _unitOfWork.Class.GetAll();
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Class>> getOne(int id)
         {
-            var one = await _context.class1.FindAsync(id);
+            var one = await _unitOfWork.Class.Get(id);
             if (one == null)
             {
                 return NotFound();
             }
-            else
-            {
-                return one;
-            }
+            return one;
         }
 
         [HttpPost]
         public async Task<ActionResult<Class>> createClass(Class class1)
         {
-            _context.class1.Add(class1);
-            await _context.SaveChangesAsync();
+            await _unitOfWork.Class.Add(class1);
 
             return CreatedAtAction("GetClass", new { id = class1.Id }, class1);
         }
@@ -56,37 +52,19 @@ namespace havis2._0.Controllers
             {
                 return BadRequest();
             }
-            _context.Entry(class1).State = EntityState.Modified;
-            var one = _context.class1.FirstOrDefault(e => e.Id == id);
-            try
+            else
             {
-                await _context.SaveChangesAsync();
+                await _unitOfWork.Class.Update(class1);
+                return NoContent();
             }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (one == null)
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-            return NoContent();
         }
         [HttpDelete]
         public async Task<ActionResult<Class>> deleteClass(int id)
         {
-            var one = await _context.class1.FindAsync(id);
+            var one = await _unitOfWork.Class.Delete(id);
             if (one == null)
             {
                 return NotFound();
-            }
-            else
-            {
-                _context.class1.Remove(one);
-                await _context.SaveChangesAsync();
             }
             return one;
         }

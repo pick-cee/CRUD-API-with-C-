@@ -3,11 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using havis2._0.Models;
 using System.Text;
 using System.Security.Cryptography;
+using havis2._0.UnitOfWorkConfiguration;
 
 namespace havis2._0.Controllers
 {
@@ -15,23 +14,23 @@ namespace havis2._0.Controllers
     [ApiController]
     public class SecurityController : Controller
     {
-        private readonly havisContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public SecurityController(havisContext context)
+        public SecurityController(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Security>>> getSecurity()
         {
-            return await _context.security.ToListAsync();
+            return await _unitOfWork.Security.GetAll();
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Security>> getOneSecurity(int id)
         {
-            var sec = await _context.security.FindAsync(id);
+            var sec = await _unitOfWork.Security.Get(id);
             if(sec == null)
             {
                 return NotFound();
@@ -50,32 +49,14 @@ namespace havis2._0.Controllers
             hashPassword = Convert.ToBase64String(provider.ComputeHash(bytes));
             security.Password = hashPassword;
 
-            _context.security.Add(security);
-            await _context.SaveChangesAsync();
-
+            await _unitOfWork.Security.Add(security);
             return CreatedAtAction("GetSecurity", new { id = security.Id }, security);
         }
 
         [HttpPost("{login}")]
-        public async Task<ActionResult> loginSecurity(Login login)
+        public async Task<Security> loginSecurity(string email, string password)
         {
-            Security security = new();
-            var provider = new SHA512CryptoServiceProvider();
-            byte[] bytes = Encoding.UTF8.GetBytes(login.Password);
-            var hashPassword = Convert.ToBase64String(provider.ComputeHash(bytes));
-            login.Password = hashPassword;
-
-            var three = await _context.security.FirstOrDefaultAsync(e => e.Email == login.Email);
-            var four = await _context.security.FirstOrDefaultAsync(e => e.Password == login.Password);
-            if (three != null && four != null)
-            {
-                return Ok();
-            }
-            else
-            {
-                await _context.SaveChangesAsync();
-                return NotFound();
-            }
+            return await _unitOfWork.Security.login(email, password);
         }
 
         [HttpPut("{id}")]
@@ -85,40 +66,22 @@ namespace havis2._0.Controllers
             {
                 return BadRequest();
             }
-            _context.Entry(security).State = EntityState.Modified;
-            var sec = _context.security.FirstOrDefault(e => e.Id == id);
-            try
+            else
             {
-                await _context.SaveChangesAsync();
+                await _unitOfWork.Security.Update(security);
+                return NoContent();
             }
-            catch(DbUpdateConcurrencyException)
-            {
-                if (sec == null)
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-            return NoContent();
         }
 
         [HttpDelete("{id}")]
         public async Task<ActionResult<Security>> deleteSecurity(int id)
         {
-            var sec = await _context.security.FindAsync(id);
-            if (sec == null)
+            var one = await _unitOfWork.Security.Delete(id);
+            if (one == null)
             {
                 return NotFound();
             }
-            else
-            {
-                _context.security.Remove(sec);
-                await _context.SaveChangesAsync();
-            }
-            return sec;
+            return one;
         }
     }
 }

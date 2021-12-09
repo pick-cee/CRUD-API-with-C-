@@ -13,6 +13,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using havis2._0.Repository;
+using havis2._0.UnitOfWorkConfiguration;
 
 namespace havis2._0
 {
@@ -35,6 +37,7 @@ namespace havis2._0
             services.AddDbContext<havisContext>(options =>
                     options.UseSqlServer(Configuration["Data:ConnectionStrings:DefaultConnection"]));
             services.AddControllers();
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "havis2._0", Version = "v1" });

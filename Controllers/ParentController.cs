@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using havis2._0.Models;
 using System.Security.Cryptography;
 using System.Text;
+using havis2._0.UnitOfWorkConfiguration;
 
 namespace havis2._0.Controllers
 {
@@ -14,23 +15,23 @@ namespace havis2._0.Controllers
     [ApiController]
     public class ParentController : Controller
     {
-        private readonly havisContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public ParentController(havisContext context)
+        public ParentController(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Parent>>> getParent()
         {
-            return await _context.parent.ToListAsync();
+            return await _unitOfWork.Parent.GetAll();
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Parent>> getOne(int id)
         {
-            var one = await _context.parent.FindAsync(id);
+            var one = await _unitOfWork.Parent.Get(id);
             if (one == null)
             {
                 return NotFound();
@@ -49,32 +50,14 @@ namespace havis2._0.Controllers
             hashPassword = Convert.ToBase64String(provider.ComputeHash(bytes));
             parent.Password = hashPassword;
 
-            _context.parent.Add(parent);
-            await _context.SaveChangesAsync();
-
+            await _unitOfWork.Parent.Add(parent);
             return CreatedAtAction("GetParent", new { id = parent.Id }, parent);
         }
 
         [HttpPost("{login}")]
-        public async Task<ActionResult> loginParent(Login login)
+        public async Task<Parent> loginParent(string email, string password)
         {
-            Parent parent = new Parent();
-            var provider = new SHA512CryptoServiceProvider();
-            byte[] bytes = Encoding.UTF8.GetBytes(login.Password);
-            var hashPassword = Convert.ToBase64String(provider.ComputeHash(bytes));
-            login.Password = hashPassword;
-
-            var three = await _context.parent.FirstOrDefaultAsync(e => e.Email == login.Email);
-            var four = await _context.parent.FirstOrDefaultAsync(e => e.Password == login.Password);
-            if (three != null && four != null)
-            {
-                return Ok();
-            }
-            else
-            {
-                await _context.SaveChangesAsync();
-                return NotFound();
-            }
+            return await _unitOfWork.Parent.login(email, password);
         }
 
         [HttpPut("{id}")]
@@ -84,37 +67,19 @@ namespace havis2._0.Controllers
             {
                 return BadRequest();
             }
-            _context.Entry(parent).State = EntityState.Modified;
-            var one = _context.parent.FirstOrDefault(e => e.Id == id);
-            try
+            else
             {
-                await _context.SaveChangesAsync();
+                await _unitOfWork.Parent.Update(parent);
+                return NoContent();
             }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (one == null)
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-            return NoContent();
         }
         [HttpDelete]
         public async Task<ActionResult<Parent>> deleteParent(int id)
         {
-            var one = await _context.parent.FindAsync(id);
+            var one = await _unitOfWork.Parent.Delete(id);
             if (one == null)
             {
                 return NotFound();
-            }
-            else
-            {
-                _context.parent.Remove(one);
-                await _context.SaveChangesAsync();
             }
             return one;
         }

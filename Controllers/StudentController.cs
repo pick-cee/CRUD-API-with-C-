@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using havis2._0.Models;
+using havis2._0.Repository;
+using havis2._0.UnitOfWorkConfiguration;
 
 namespace havis2._0.Controllers
 {
@@ -13,23 +11,29 @@ namespace havis2._0.Controllers
     [ApiController]
     public class StudentController : Controller
     {
-        private readonly havisContext _context;
+        private readonly IRepository<Student> _repository;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public StudentController(havisContext context)
+        public StudentController(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
+        }
+
+        public StudentController(IRepository<Student> repository)
+        {
+            _repository = repository;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Student>>> getStudent()
         {
-            return await _context.student.ToListAsync();
+            return await _unitOfWork.Student.GetAll();
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Student>> getOne(int id)
         {
-            var one = await _context.student.FindAsync(id);
+            var one = await _unitOfWork.Student.Get(id);
             if (one == null)
             {
                 return NotFound();
@@ -43,9 +47,7 @@ namespace havis2._0.Controllers
         [HttpPost]
         public async Task<ActionResult<Student>> createStudent(Student student)
         {
-            _context.student.Add(student);
-            await _context.SaveChangesAsync();
-
+            await _unitOfWork.Student.Add(student);
             return CreatedAtAction("GetStudent", new { id = student.Id }, student);
         }
 
@@ -56,37 +58,19 @@ namespace havis2._0.Controllers
             {
                 return BadRequest();
             }
-            _context.Entry(student).State = EntityState.Modified;
-            var one = _context.student.FirstOrDefault(e => e.Id == id);
-            try
+            else
             {
-                await _context.SaveChangesAsync();
+                await _unitOfWork.Student.Update(student);
+                return NoContent();
             }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (one == null)
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-            return NoContent();
         }
         [HttpDelete]
         public async Task<ActionResult<Student>> deleteStudent(int id)
         {
-            var one = await _context.student.FindAsync(id);
+            var one = await _unitOfWork.Student.Delete(id);
             if (one == null)
             {
                 return NotFound();
-            }
-            else
-            {
-                _context.student.Remove(one);
-                await _context.SaveChangesAsync();
             }
             return one;
         }

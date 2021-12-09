@@ -18,7 +18,6 @@ namespace havis2._0.Repository
         public async Task<T> Add(T entity)
         {
             _context.Set<T>().Add(entity);
-            await _context.SaveChangesAsync();
             return entity;
         }
 
@@ -32,7 +31,6 @@ namespace havis2._0.Repository
             else
             {
                 _context.Set<T>().Remove(entity);
-                await _context.SaveChangesAsync();
 
                 return entity;
             }
@@ -51,7 +49,6 @@ namespace havis2._0.Repository
         public async Task<T> Update(T entity)
         {
             _context.Entry(entity).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
             return entity;
         }
     }

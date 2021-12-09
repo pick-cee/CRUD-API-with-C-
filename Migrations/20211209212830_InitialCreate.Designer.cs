@@ -10,7 +10,7 @@ using havis2._0.Models;
 namespace havis2._0.Migrations
 {
     [DbContext(typeof(havisContext))]
-    [Migration("20211121204655_InitialCreate")]
+    [Migration("20211209212830_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

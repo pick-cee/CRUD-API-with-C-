@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Text;
 using System.Security.Cryptography;
+using Microsoft.EntityFrameworkCore;
 
 namespace havis2._0.Repository.AccManRepo
 {
@@ -22,14 +23,13 @@ namespace havis2._0.Repository.AccManRepo
             var hashPassword = Convert.ToBase64String(provider.ComputeHash(bytes));
             accMan.Password = hashPassword;
 
-            var one = _context.accMan.Where(e => e.Email == accMan.Email && e.Password == accMan.Password).FirstOrDefault();
+            var one = await _context.accMan.Where(e => e.Email == accMan.Email && e.Password == accMan.Password).FirstOrDefaultAsync();
             if (one != null)
             {
                 return accMan;
             }
             else
             {
-                await _context.SaveChangesAsync();
                 return null;
             }
         }

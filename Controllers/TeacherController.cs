@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Security.Cryptography;
 using System.Text;
+using havis2._0.UnitOfWorkConfiguration;
 
 namespace havis2._0.Controllers
 {
@@ -14,23 +15,23 @@ namespace havis2._0.Controllers
     [ApiController]
     public class TeacherController : Controller
     {
-        private readonly havisContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public TeacherController(havisContext context)
+        public TeacherController(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Teacher>>> getTeacher()
         {
-            return await _context.teacher.ToListAsync();
+            return await _unitOfWork.Teacher.GetAll();
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Teacher>> getOne(int id)
         {
-            var one = await _context.teacher.FindAsync(id);
+            var one = await _unitOfWork.Teacher.Get(id);
             if (one == null)
             {
                 return NotFound();
@@ -49,32 +50,15 @@ namespace havis2._0.Controllers
             hashPassword = Convert.ToBase64String(provider.ComputeHash(bytes));
             teacher.Password = hashPassword;
 
-            _context.teacher.Add(teacher);
-            await _context.SaveChangesAsync();
+            await _unitOfWork.Teacher.Add(teacher);
 
             return CreatedAtAction("GetTeacher", new { id = teacher.Id }, teacher);
         }
 
         [HttpPost("{login}")]
-        public async Task<ActionResult> loginTeacher(Login login)
+        public async Task<Teacher> loginTeacher(string email, string password)
         {
-            Teacher teacher = new ();
-            var provider = new SHA512CryptoServiceProvider();
-            byte[] bytes = Encoding.UTF8.GetBytes(login.Password);
-            var hashPassword = Convert.ToBase64String(provider.ComputeHash(bytes));
-            login.Password = hashPassword;
-
-            var three = await _context.teacher.FirstOrDefaultAsync(e => e.Email == login.Email);
-            var four = await _context.teacher.FirstOrDefaultAsync(e => e.Password == login.Password);
-            if (three != null && four != null)
-            {
-                return Ok();
-            }
-            else
-            {
-                await _context.SaveChangesAsync();
-                return NotFound();
-            }
+            return await _unitOfWork.Teacher.login(email, password);
         }
 
         [HttpPut("{id}")]
@@ -84,37 +68,19 @@ namespace havis2._0.Controllers
             {
                 return BadRequest();
             }
-            _context.Entry(teacher).State = EntityState.Modified;
-            var one = _context.teacher.FirstOrDefault(e => e.Id == id);
-            try
+            else
             {
-                await _context.SaveChangesAsync();
+                await _unitOfWork.Teacher.Update(teacher);
+                return NoContent();
             }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (one == null)
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-            return NoContent();
         }
         [HttpDelete]
         public async Task<ActionResult<Teacher>> deleteTeacher(int id)
         {
-            var one = await _context.teacher.FindAsync(id);
+            var one = await _unitOfWork.Teacher.Delete(id);
             if (one == null)
             {
                 return NotFound();
-            }
-            else
-            {
-                _context.teacher.Remove(one);
-                await _context.SaveChangesAsync();
             }
             return one;
         }

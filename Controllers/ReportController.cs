@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using havis2._0.Models;
+using havis2._0.UnitOfWorkConfiguration;
 
 namespace havis2._0.Controllers
 {
@@ -13,23 +10,23 @@ namespace havis2._0.Controllers
     [ApiController]
     public class ReportController : Controller
     {
-        private readonly havisContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public ReportController(havisContext context)
+        public ReportController(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Report>>> getReport()
         {
-            return await _context.report.ToListAsync();
+            return await _unitOfWork.Report.GetAll();
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Report>> getOne(int id)
         {
-            var one = await _context.report.FindAsync(id);
+            var one = await _unitOfWork.Report.Get(id);
             if (one == null)
             {
                 return NotFound();
@@ -43,9 +40,7 @@ namespace havis2._0.Controllers
         [HttpPost]
         public async Task<ActionResult<Report>> createReport(Report report)
         {
-            _context.report.Add(report);
-            await _context.SaveChangesAsync();
-
+            await _unitOfWork.Report.Add(report);
             return CreatedAtAction("GetReport", new { id = report.Id }, report);
         }
 
@@ -56,39 +51,24 @@ namespace havis2._0.Controllers
             {
                 return BadRequest();
             }
-            _context.Entry(report).State = EntityState.Modified;
-            var one = _context.report.FirstOrDefault(e => e.Id == id);
-            try
+            else
             {
-                await _context.SaveChangesAsync();
+                await _unitOfWork.Report.Update(report);
+                return NoContent();
             }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (one == null)
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-            return NoContent();
         }
+
         [HttpDelete]
         public async Task<ActionResult<Report>> deleteReport(int id)
         {
-            var one = await _context.report.FindAsync(id);
+            var one = await _unitOfWork.Report.Delete(id);
             if (one == null)
             {
                 return NotFound();
-            }
-            else
-            {
-                _context.report.Remove(one);
-                await _context.SaveChangesAsync();
             }
             return one;
         }
     }
 }
+
+

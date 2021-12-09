@@ -3,13 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using havis2._0.Models;
 using System.Security.Cryptography;
 using System.Text;
-using havis2._0.Repository;
-using havis2._0.Repository.AccManRepo;
+using havis2._0.UnitOfWorkConfiguration;
 
 namespace havis2._0.Controllers
 {
@@ -17,35 +14,23 @@ namespace havis2._0.Controllers
     [ApiController]
     public class AccManController : Controller
     {
-        //private readonly havisContext _context;
-        private readonly IRepository<AccMan> _repository;
-        private readonly IAccManRepo _accManRepo;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public AccManController(IAccManRepo accManRepo)
+        public AccManController(IUnitOfWork unitOfWork)
         {
-            _accManRepo = accManRepo;
+            _unitOfWork = unitOfWork;
         }
-
-        public AccManController(IRepository<AccMan> repository)
-        {
-            _repository = repository;
-        }
-
-        //public AccManController(havisContext context)
-        //{
-        //    _context = context;
-        //}
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<AccMan>>> getAccMan()
         {
-            return await _repository.GetAll();
+            return await _unitOfWork.AccMan.GetAll();
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<AccMan>> getOne(int id)
         {
-            var one = await _repository.Get(id);
+            var one = await _unitOfWork.AccMan.Get(id);
             if (one == null)
             {
                 return NotFound();
@@ -61,7 +46,7 @@ namespace havis2._0.Controllers
             hashPassword = Convert.ToBase64String(provider.ComputeHash(bytes));
             accMan.Password = hashPassword;
 
-            await _repository.Add(accMan);
+            await _unitOfWork.AccMan.Add(accMan);
 
             return CreatedAtAction("GetAccMan", new { id = accMan.Id }, accMan);
         }
@@ -69,7 +54,7 @@ namespace havis2._0.Controllers
         [HttpPost("{login}")]
         public async Task<AccMan> login(string email, string password)
         {
-            return await _accManRepo.login(email, password);
+            return await _unitOfWork.AccMan.login(email, password);
         }
 
 
@@ -83,14 +68,14 @@ namespace havis2._0.Controllers
             }
             else
             {
-                await _repository.Update(accMan);
+                await _unitOfWork.AccMan.Update(accMan);
                 return NoContent();
             }
         }
         [HttpDelete]
         public async Task<ActionResult<AccMan>> deleteAccMan(int id)
         {
-            var one = await _repository.Delete(id);
+            var one = await _unitOfWork.AccMan.Delete(id);
             if(one == null)
             {
                 return NotFound();
